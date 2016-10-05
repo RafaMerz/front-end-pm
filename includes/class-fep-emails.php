@@ -150,7 +150,6 @@ class Fep_Emails
 			}
 		}
 		//var_dump($user_emails);
-		$chunked_bcc = array_chunk( $user_emails, 25);
 		
 		$subject =  get_bloginfo("name").': '.__('New Announcement', 'front-end-pm');
 		$message = __('A new Announcement is Published in ', 'front-end-pm')."\r\n";
@@ -166,6 +165,8 @@ class Fep_Emails
 		
 		if( empty( $content['subject'] ) || empty( $content['message'] ) )
 			return;
+		
+		$chunked_bcc = array_chunk( $user_emails, 25);
 		
 	fep_add_email_filters();
 	
