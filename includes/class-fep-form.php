@@ -191,48 +191,53 @@ function field_output( $field, $errors )
 
 					break;
 				case 'message_to' :
-							$to = (isset($_REQUEST['to']))? $_REQUEST['to']:'';
+					$to = (isset($_REQUEST['to']))? $_REQUEST['to']:'';
+					
+					if( ! empty( $field['posted-value' ] ) ) {
+						$message_to = fep_get_userdata( $field['posted-value' ], 'user_nicename' );
+						$message_top = fep_get_userdata( $message_to, 'display_name' );
+					} elseif( $to ){
+						$support = array(
+							'nicename' 	=> true,
+							'id' 		=> true,
+							'email' 	=> true,
+							'login' 	=> true
+							);
+						
+						$support = apply_filters( 'fep_message_to_support', $support );
 							
-							$support = array(
-								'nicename' 	=> true,
-								'id' 		=> true,
-								'email' 	=> true,
-								'login' 	=> true
-								);
-							
-							$support = apply_filters( 'fep_message_to_support', $support );
-								
-							if ( !empty( $support['nicename'] ) && $user = fep_get_userdata( $to, 'user_nicename' ) ) {
-								$m_to = $user;
-								$m_top = fep_get_userdata( $user, 'display_name');
-							} elseif( is_numeric( $to ) && !empty( $support['id'] ) && $user = fep_get_userdata( $to, 'user_nicename', 'id' ) ) {
-								$m_to = $user;
-								$m_top = fep_get_userdata( $user, 'display_name');
-							} elseif ( is_email( $to ) && !empty( $support['email'] ) && $user = fep_get_userdata( $to, 'user_nicename', 'email' ) ) {
-								$m_to = $user;
-								$m_top = fep_get_userdata( $user, 'display_name');
-							} elseif ( !empty( $support['login'] ) && $user = fep_get_userdata( $to, 'user_nicename', 'login' ) ) {
-								$m_to = $user;
-								$m_top = fep_get_userdata( $user, 'display_name');
-							} else {
-								$m_to = '';
-								$m_top = '';
-							}
-							
-							$message_to = ( isset( $_POST['message_to'] ) ) ? esc_attr( $_POST['message_to'] ): $m_to;
-							$message_top = ( isset( $_POST['message_top'] ) ) ? esc_attr( $_POST['message_top'] ): $m_top;
+						if ( !empty( $support['nicename'] ) && $user = fep_get_userdata( $to, 'user_nicename' ) ) {
+							$message_to = $user;
+							$message_top = fep_get_userdata( $user, 'display_name');
+						} elseif( is_numeric( $to ) && !empty( $support['id'] ) && $user = fep_get_userdata( $to, 'user_nicename', 'id' ) ) {
+							$message_to = $user;
+							$message_top = fep_get_userdata( $user, 'display_name');
+						} elseif ( is_email( $to ) && !empty( $support['email'] ) && $user = fep_get_userdata( $to, 'user_nicename', 'email' ) ) {
+							$message_to = $user;
+							$message_top = fep_get_userdata( $user, 'display_name');
+						} elseif ( !empty( $support['login'] ) && $user = fep_get_userdata( $to, 'user_nicename', 'login' ) ) {
+							$message_to = $user;
+							$message_top = fep_get_userdata( $user, 'display_name');
+						} else {
+							$message_to = '';
+							$message_top = '';
+						}
+					} else {
+						$message_to = '';
+						$message_top = '';
+					}
 
-								 if( ! empty($field['suggestion'])) : ?>
+						if( ! empty($field['suggestion'])) : ?>
 							<?php wp_enqueue_script( 'fep-script' ); ?>
 							
-							<input type="hidden" name="message_to" id="fep-message-to" autocomplete="off" value="<?php echo $message_to; ?>" />
+							<input type="hidden" name="message_to" id="fep-message-to" autocomplete="off" value="<?php echo esc_attr( $message_to ); ?>" />
 							
-							<input type="text" class="<?php echo sanitize_html_class( $field['class'] ); ?>" name="message_top" id="fep-message-top" autocomplete="off" placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>" value="<?php echo $message_top; ?>" />
+							<input type="text" class="<?php echo sanitize_html_class( $field['class'] ); ?>" name="message_top" id="fep-message-top" autocomplete="off" placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>" value="<?php echo esc_attr( $message_top ); ?>" />
 							<div id="fep-result"></div>
 							
 						<?php else : ?>
 							
-							<input type="text" class="<?php echo sanitize_html_class( $field['class'] ); ?>" name="message_to" id="fep-message-top" placeholder="<?php echo esc_attr( $field['noscript-placeholder'] ); ?>" autocomplete="off" value="<?php echo $message_to; ?>" />
+							<input type="text" class="<?php echo sanitize_html_class( $field['class'] ); ?>" name="message_to" id="fep-message-top" placeholder="<?php echo esc_attr( $field['noscript-placeholder'] ); ?>" autocomplete="off" value="<?php echo esc_attr( $message_to ); ?>" />
 							
 						<?php endif;
 
