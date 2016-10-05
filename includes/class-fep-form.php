@@ -545,7 +545,9 @@ public function form_field_output( $where = 'newmessage', $errors= '', $value = 
 				$field['value'] = $value[$field['name']];
 			}
 			$field['posted-value'] = isset( $_REQUEST[$field['name']] ) ? stripslashes_deep( $_REQUEST[$field['name']] ) : $field['value'];
-
+			
+			$field = apply_filters( 'fep_filter_form_field_before_output', $field, $where );
+			
 			if ( has_action( 'fep_form_field_init_output_' . $field['type'] ) ) {
 				do_action( 'fep_form_field_init_output_' . $field['type'], $field, $errors );
 			} else {
