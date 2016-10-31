@@ -14,8 +14,8 @@ class Fep_Attachment
 	
     function actions_filters()
     {
-	add_action ('fep_display_after_parent_message', array($this, 'display_attachment'));
-	add_action ('fep_display_after_reply_message', array($this, 'display_attachment'));
+	//add_action ('fep_display_after_parent_message', array($this, 'display_attachment'));
+	add_action ('fep_display_after_message', array($this, 'display_attachment'));
 	add_action ('fep_display_after_announcement', array($this, 'display_attachment'));
 	add_action('template_redirect', array($this, 'download_file' ) );
 	
@@ -115,8 +115,8 @@ function upload_file( $upload_data, $message_id, $inserted_message ) {
 		  echo "<hr /><strong>" . __("Attachments", 'front-end-pm') . ":</strong><br />";
 		  foreach ($attachments as $attachment){
 		  
-		$attachment_id = $attachment->ID;
-		$name = esc_html( basename(wp_get_attachment_url( $attachment_id )) );
+			$attachment_id = $attachment->ID;
+			$name = esc_html( basename(wp_get_attachment_url( $attachment_id )) );
 		
 			echo "<a href='".fep_query_url('download', array( 'id' => $attachment_id, 'token' => fep_create_nonce('download' . $attachment_id ) ))."' title='Download {$name}'>{$name}</a><br />";
 				} 
