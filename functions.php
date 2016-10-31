@@ -377,6 +377,9 @@ function fep_get_replies( $id )
 		'posts_per_page' => -1,
 		'order'=> 'ASC'
 	 );
+	 
+	 $args = apply_filters( 'fep_filter_get_replies', $args );
+	 
 	return new WP_Query( $args );
 }
 
@@ -395,6 +398,9 @@ function fep_get_attachments( $post_id = 0 ) {
         'post_status'    => array( 'publish', 'inherit' ),
         'post_parent'    => $post_id
     );
+	
+	$args = apply_filters( 'fep_filter_get_attachments', $args );
+	
 	return get_posts( $args );
 }
 
@@ -414,6 +420,8 @@ function fep_get_message_with_replies( $parent_id )
 	} else {
 		$args['post__in'] = array( $parent_id );
 	}
+	
+	$args = apply_filters( 'fep_filter_get_message_with_replies', $args );
 	 
 	return new WP_Query( $args );
 }
