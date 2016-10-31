@@ -387,6 +387,39 @@ function fep_get_attachments( $post_id = 0 ) {
 	return get_posts( $args );
 }
 
+function fep_get_message_with_replies( $parent_id )
+{
+	
+	$args = array(
+		'post_type' => 'fep_message',
+		'post_status' => 'publish',
+		'posts_per_page' => -1,
+		'order'=> 'ASC'
+	 );
+	 
+	 if( 'threaded' == fep_get_option('message_view','threaded') ) {
+		$args['post_parent'] = $parent_id;
+		$args['fep_include_parent'] = true;
+	} else {
+		$args['post__in'] = array( $parent_id );
+	}
+	 
+	return new WP_Query( $args );
+}
+
+add_filter( 'posts_where' , 'fep_posts_where', 10, 2 );
+
+function fep_posts_where( $where, $q ) {
+
+	global $wpdb;
+	
+	if ( true === $q->get( 'fep_include_parent' ) && $q->get( 'post_parent' ) ){
+        $where .= $wpdb->prepare( " OR ( $wpdb->posts.ID = %d AND $wpdb->posts.post_status = %s )", $q->get( 'post_parent' ), $q->get( 'post_status' ) );
+	}
+	
+	return $where;
+}
+
 function fep_get_parent_id( $id ) {
 
 	if( ! $id )
