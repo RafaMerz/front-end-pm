@@ -137,6 +137,15 @@ function user_message_count( $value = 'all', $force = false, $user_id = false )
 	if( ! $user_id ) {
 		$user_id = get_current_user_id();
 	}
+	
+	if( ! $user_id ) {
+		if( 'all' == $value ) {
+			return array();
+		} else {
+			return 0;
+		}
+	}
+	
 	$user_meta = get_user_meta( $user_id, '_fep_user_message_count', true );
 	
 	if( false === $user_meta || $force || !isset( $user_meta['total'] ) || !isset( $user_meta['read'] )|| !isset( $user_meta['unread'] ) || !isset( $user_meta['archive'] ) || !isset( $user_meta['inbox'] ) || !isset( $user_meta['sent'] ) ) {
@@ -333,7 +342,7 @@ function bulk_action( $action, $ids = null ) {
 			$message .= ' ';
 			$message .= __('successfully restored.', 'front-end-pm');
 		}
-		$message = '<div class="fep-success">'.$message.'</div>';
+		//$message = '<div class="fep-success">'.$message.'</div>';
 	}
 	return apply_filters( 'fep_message_bulk_action_message', $message, $count);
 }
