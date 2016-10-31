@@ -499,7 +499,7 @@ public function form_field_output( $where = 'newmessage', $errors= '', $value = 
 	//$fields = $this->form_fields( $where );
 	
 	if( ! is_wp_error($errors) )
-		$errors = new WP_Error();
+		$errors = fep_errors();
 		
 		$form_attr = array(
 			'method' => 'post'
@@ -583,7 +583,7 @@ public function validate_form_field( $where = 'newmessage' )
 {
 		$fields = $this->form_fields( $where );
 	
-		$errors = new WP_Error();
+		$errors = fep_errors();
 
 		foreach ( $fields as $key => $field ) {
 			$defaults = array(
