@@ -1077,3 +1077,60 @@ function fep_is_pro(){
 	return file_exists( FEP_PLUGIN_DIR. 'pro/pro-features.php' );
 }
 
+function fep_errors(){
+    static $errors; // Will hold global variable safely
+    return isset($errors) ? $errors : ($errors = new WP_Error());
+}
+
+function fep_success(){
+    static $success; // Will hold global variable safely
+    return isset($success) ? $success : ($success = new WP_Error());
+}
+
+function fep_info_output(){
+    
+	/* 
+	// If conditions are met and errors exist:
+    if(!fep_info()->get_error_codes()) return;
+	
+	$success = array();
+	$info = array();
+	$errors = array();
+	
+	// Loop error codes and display errors
+    foreach( fep_info()->get_error_codes() as $code ){
+	
+        $data = fep_info()->get_error_data($code);
+        // Display stuff here
+		if( 'success' == $data ) {
+			$success[] = fep_info()->get_error_message($code);
+		} elseif( 'info' == $data ){
+			$info[] = fep_info()->get_error_message($code);
+		} else {
+			$errors[] = fep_info()->get_error_message($code);
+		}
+    }
+	*/
+	
+	$html = '';
+	
+	if( fep_success()->get_error_messages() ) {
+		$html .= '<div class="fep-success">';
+		foreach( fep_success()->get_error_messages() as $s){
+			$html .= esc_html($s).'<br />';
+		}
+		$html .= '</div>';
+	}
+
+	if( fep_errors()->get_error_messages() ) {
+		$html .= '<div class="fep-wp-error">';
+		foreach( fep_errors()->get_error_messages() as $e){
+			$html .= '<strong>' . __('Error', 'front-end-pm') . ': </strong>'.esc_html($e).'<br />';
+		}
+		$html .= '</div>';
+	}
+	
+	return $html;
+	
+}
+
