@@ -39,21 +39,14 @@ function get_user_announcements()
 {
 
 	$user_id = get_current_user_id();
-
-	
-	if( ! $user_id )
-		return array();
 	
 	$filter = ! empty( $_GET['fep-filter'] ) ? $_GET['fep-filter'] : '';
-	$per_page = fep_get_option('announcements_page',15);
-	$page = !empty( $_GET['feppage']) ? absint( $_GET['feppage'] ) - 1: 0;
-    $offset = $page * $per_page;
 	
 		$args = array(
 			'post_type' => 'fep_announcement',
 			'post_status' => 'publish',
 			'post_parent' => 0,
-			'posts_per_page' => $per_page,
+			'posts_per_page' => fep_get_option('announcements_page',15),
 			'paged'	=> !empty($_GET['feppage']) ? absint($_GET['feppage']): 1,
 			'meta_query' => array(
 				array(
@@ -70,54 +63,42 @@ function get_user_announcements()
 			)
 		 );
 		 
-		 if( $filter && 'after-i-registered' != $filter ) {
-		 	unset( $args['paged'] );
-			$args['posts_per_page'] = -1;
-		 }
-	
-		if( 'after-i-registered' == $filter ) {
+		 if( ! $user_id )
+			$args['post__in'] = array(0);
+		 
+		 switch( $filter ) {
+		 	case 'after-i-registered' :
 				$args['date_query'] = array( 'after' => fep_get_userdata( $user_id, 'user_registered', 'id' ) );
-			}
-		
+			break;
+			case 'read' :
+				$args['meta_query'][] = array(
+					'key' => '_fep_read_by',
+					'value' => serialize($user_id),
+					'compare' => 'LIKE'
+				);
+			break;
+			case 'unread' :
+				$args['meta_query'][] = array(
+					'relation' => 'OR',
+						array(
+							'key' => '_fep_read_by',
+							//'value' => serialize($user_id),
+							'compare' => 'NOT EXISTS'
+						),
+						array(
+							'key' => '_fep_read_by',
+							'value' => serialize($user_id),
+							'compare' => 'NOT LIKE'
+						),
+				);
+			break;
+			default:
+				$args = apply_filters( 'fep_announcement_query_args_'. $filter, $args);
+			break;
+		 }
 		 $args = apply_filters( 'fep_announcement_query_args', $args);
 		 
-	$announcements = get_posts( $args );
-	
-	if( ! $announcements )
-		return array();
-		
-	if( ! $filter || 'after-i-registered' == $filter ) {
-		 	return $announcements;
-		 }
-	
-	$count = 0;
-	
-	foreach( $announcements as $index => $announcement ) {
-
-		if( 'read' == $filter ) {
-			$read_by = get_post_meta( $announcement->ID, '_fep_read_by', true );
-			
-			if( ! is_array( $read_by ) || ! in_array( $user_id, $read_by ) ) {
-				unset( $announcements[$index] );
-				continue;
-			}
-		}
-		if( 'unread' == $filter ) {
-			$read_by = get_post_meta( $announcement->ID, '_fep_read_by', true );
-			
-			if( is_array( $read_by ) && in_array( $user_id, $read_by ) ) {
-				unset( $announcements[$index] );
-				continue;
-			}
-		}
-		
-		$count++;
-		
-		if( $count >= ( $offset + $per_page ) )
-			break;
-		
-	}
-	return array_slice( $announcements, $offset, $per_page );
+	return new WP_Query( $args );
 
 }
 
@@ -126,6 +107,15 @@ function get_user_announcement_count( $value = 'all', $force = false, $user_id =
 	if( ! $user_id ) {
 		$user_id = get_current_user_id();
 	}
+	
+	if( ! $user_id ) {
+		if( 'all' == $value ) {
+			return array();
+		} else {
+			return 0;
+		}
+	}
+	
 	$user_meta = get_user_meta( $user_id, '_fep_user_announcement_count', true );
 	
 	if( false === $user_meta || $force || !isset( $user_meta['total'] ) || !isset( $user_meta['read'] )|| !isset( $user_meta['unread'] ) ) {
@@ -205,12 +195,6 @@ function bulk_action( $action, $ids = null ) {
 	if( !$action || !$ids || !is_array($ids) ) {
 		return '';
 	}
-	
-	$token = ! empty($_POST['token']) ? $_POST['token'] : '';
-				
-	if ( !fep_verify_nonce( $token, 'announcement_bulk_action') ) {
-		return '<div class="fep-error">' .__("Invalid Token. Please try again!", 'front-end-pm'). ' </div>';
-	}
 					
 	$count = 0;
 	foreach( $ids as $id ) {
@@ -228,7 +212,7 @@ function bulk_action( $action, $ids = null ) {
 			$message .= ' ';
 			$message .= __('successfully deleted.', 'front-end-pm');
 		} 
-		$message = '<div class="fep-success">'.$message.'</div>';
+		//$message = '<div class="fep-success">'.$message.'</div>';
 	}
 	return apply_filters( 'fep_bulk_action_message', $message, $count);
 }
@@ -307,118 +291,36 @@ function get_column_content($column)
 }
 
 	function announcement_box()
-{
-	global $post;
-	
-	  $g_filter = ! empty( $_GET['fep-filter'] ) ? $_GET['fep-filter'] : '';
-	  
-	  $message = '';
-	  
-	  if( isset($_POST['fep_action']) && 'announcement_bulk_action' == $_POST['fep_action'] ) {
-	  	
-		$posted_bulk_action = ! empty($_POST['fep-bulk-action']) ? $_POST['fep-bulk-action'] : '';
-	  	
-		$message = $this->bulk_action( $posted_bulk_action );
-	  }
-	  
-	  $total_announcements = $this->get_user_announcement_count('total');
-	  
-	  $announcements = $this->get_user_announcements();
-	  
-	  if( ! $total_announcements ) {
-	  	return "<div class='fep-error'>".apply_filters('fep_filter_announcement_empty', __("No announcements found.", 'front-end-pm') )."</div>";
-	  }
-	  ob_start();
-	  
-	  echo $message;
-	  
-	  do_action('fep_display_before_announcementbox');
-	  
-	  	?><form class="fep-message-table form" method="post" action="">
-		<div class="fep-table fep-action-table">
-			<div>
-				<div class="fep-bulk-action">
-					<select name="fep-bulk-action">
-						<option value=""><?php _e('Bulk action', 'front-end-pm'); ?></option>
-						<?php foreach( $this->get_table_bulk_actions() as $bulk_action => $bulk_action_display ) { ?>
-						<option value="<?php echo $bulk_action; ?>"><?php echo $bulk_action_display; ?></option>
-						<?php } ?>
-					</select>
-				</div>
-				<div>
-					<input type="hidden" name="token"  value="<?php echo fep_create_nonce('announcement_bulk_action'); ?>"/>
-					<button type="submit" class="fep-button" name="fep_action" value="announcement_bulk_action"><?php _e('Apply', 'front-end-pm'); ?></button>
-				</div>
-				<div class="fep-loading-gif-div">
-				</div>
-				<div class="fep-filter">
-					<select onchange="if (this.value) window.location.href=this.value">
-						<option value="<?php echo esc_url( remove_query_arg( array( 'feppage', 'fep-filter') ) ); ?>"><?php _e('Show all', 'front-end-pm'); ?></option>
-						<?php foreach( $this->get_table_filters() as $filter => $filter_display ) { ?>
-						<option value="<?php echo esc_url( add_query_arg( array('fep-filter' => $filter, 'feppage' => false ) ) ); ?>" <?php selected($g_filter, $filter);?>><?php echo $filter_display; ?></option>
-						<?php } ?>
-					</select>
-				</div>
-			</div>
-		</div>
-		<?php if( $announcements ) { ?>
-		<div id="fep-table" class="fep-table fep-odd-even"><?php
-			foreach ( $announcements as $post ) { 
-				setup_postdata( $post ); ?>
-					<div id="fep-message-<?php echo get_the_ID(); ?>" class="fep-table-row"><?php
-						foreach ( $this->get_table_columns() as $column => $display ) { ?>
-							<div class="fep-column fep-column-<?php echo $column; ?>"><?php $this->get_column_content($column); ?></div>
-						<?php } ?>
-					</div>
-				<?php
-			} //endwhile
-			?></div><?php
-			echo fep_pagination( $this->get_user_announcement_count( empty($g_filter) ? 'total' : $g_filter ), fep_get_option('announcements_page', 15) );
-		} else {
-			?><div class="fep-error"><?php _e('No announcements found. Try different filter.', 'front-end-pm'); ?></div><?php 
-		}
-		?></form><?php 
-		wp_reset_postdata();
-	  return ob_get_clean();
-}
+	{		
+		  $g_filter = ! empty( $_GET['fep-filter'] ) ? $_GET['fep-filter'] : '';
+		  
+		  $total_announcements = $this->get_user_announcement_count('total');
+		  
+		  $announcements = $this->get_user_announcements();
+		  
+		  $template = fep_locate_template( 'announcement_box.php');
+		  
+		  ob_start();
+		  include( $template );
+		  return ob_get_clean();
+	}
 
 function view_announcement()
     {
       global $post;
 
-      $pID = !empty($_GET['id']) ? absint($_GET['id']) : 0;
+      $id = !empty($_GET['id']) ? absint($_GET['id']) : 0;
 	  
-	  if ( ! $pID || ! fep_current_user_can( 'view_announcement', $pID ) ) {
+	  if ( ! $id || ! fep_current_user_can( 'view_announcement', $id ) ) {
 	  	return "<div class='fep-error'>".__("You do not have permission to view this announcement!", 'front-end-pm')."</div>";
 	  }
 
-      $announcement = fep_get_message( $pID );
+      $announcement = $this->get_announcement( $id );
 
-	  if ( ! $announcement ) {
-	  	return "<div class='fep-error'>".__("You do not have permission to view this announcement!", 'front-end-pm')."</div>";
-	  }
-	  
-	  $post = $announcement; //setup_postdata does not work properly if variable name is NOT $post !!!!!
-	  
-	  ob_start();
-	  setup_postdata( $post );
-	  
-	  if( fep_make_read() ) {
-	  	delete_user_meta( get_current_user_id(), '_fep_user_announcement_count' );
-	  }
-	  ?>
-		 <div class="fep-per-message">
-			<div class="fep-message-title"><?php the_title(); ?>
-				<span class="date"><?php the_time(); ?></span>
-			</div>
-			<div class="fep-message-content">
-				<?php the_content(); ?>
-				<?php do_action ( 'fep_display_after_announcement' ); ?>
-			</div>
-		</div>
-		<?php 
-		wp_reset_postdata();
-		
+	  $template = fep_locate_template( 'view_announcement.php');
+		  
+		ob_start();
+		include( $template );
 		return ob_get_clean();
     }
 
