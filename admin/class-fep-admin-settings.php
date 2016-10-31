@@ -745,7 +745,7 @@ function fep_admin_sidebar()
 	
 function add_settings_link( $links, $file ) {
 	//add settings link in plugins page
-	if ( strpos( $file, 'front-end-pm' ) !== false ) {
+	if ( $file == plugin_basename(FEP_PLUGIN_FILE) ) {
 		$settings_link = '<a href="' . admin_url( 'edit.php?post_type=fep_message&page=fep_settings' ) . '">' .__( 'Settings', 'front-end-pm' ) . '</a>';
 		array_unshift( $links, $settings_link );
 	}
