@@ -25,6 +25,16 @@ function recalculate_user_stats(){
 	delete_metadata( 'user', 0, '_fep_user_announcement_count', '', true );
 }
 
+function get_announcement( $id )
+{
+	$args = array(
+		'post_type' => 'fep_announcement',
+		'post_status' => 'publish',
+		'post__in' => array( $id ),
+	 );
+	return new WP_Query( $args );
+}
+
 function get_user_announcements()
 {
 
