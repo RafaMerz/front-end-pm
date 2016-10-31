@@ -1134,3 +1134,23 @@ function fep_info_output(){
 	
 }
 
+function fep_locate_template( $template_name, $template_path = '', $default_path = '' ) {
+
+	if ( ! $template_path ) {
+		$template_path = 'front-end-pm/';
+	}
+	// Set default plugin templates path.
+	if ( ! $default_path ) {
+		$default_path = FEP_PLUGIN_DIR . 'templates/'; // Path to the template folder
+	}
+	// Search template file in theme folder.
+	$template = locate_template( $template_path . $template_name );
+	
+	// Get plugins template file.
+	if ( ! $template ) {
+		$template = $default_path . $template_name;
+	}
+	
+	return apply_filters( 'fep_locate_template', $template, $template_name, $template_path, $default_path );
+}
+
