@@ -94,4 +94,77 @@ class Front_End_Pm {
 
 Front_End_Pm::init();
 
+if ( !function_exists('fep_get_plugin_caps') ) :
+
+function fep_get_plugin_caps( $edit_published = false, $for = 'both' ){
+	$message_caps = array(
+		'delete_published_fep_messages' => 1,
+		'delete_private_fep_messages' => 1,
+		'delete_others_fep_messages' => 1,
+		'delete_fep_messages' => 1,
+		'publish_fep_messages' => 1,
+		'read_private_fep_messages' => 1,
+		'edit_private_fep_messages' => 1,
+		'edit_others_fep_messages' => 1,
+		'edit_fep_messages' => 1,
+		);
+	
+	$announcement_caps = array(
+		'delete_published_fep_announcements' => 1,
+		'delete_private_fep_announcements' => 1,
+		'delete_others_fep_announcements' => 1,
+		'delete_fep_announcements' => 1,
+		'publish_fep_announcements' => 1,
+		'read_private_fep_announcements' => 1,
+		'edit_private_fep_announcements' => 1,
+		'edit_others_fep_announcements' => 1,
+		'edit_fep_announcements' => 1,
+		'create_fep_announcements' => 1,
+		);
+	
+	if( 'fep_message' == $for ) {
+		$caps = $message_caps;
+		if( $edit_published ) {
+			$caps['edit_published_fep_messages'] = 1;
+		}
+	} elseif( 'fep_announcement' == $for ){
+		$caps = $announcement_caps;
+		if( $edit_published ) {
+			$caps['edit_published_fep_announcements'] = 1;
+		}
+	} else {
+		$caps = array_merge( $message_caps, $announcement_caps );
+		if( $edit_published ) {
+			$caps['edit_published_fep_messages'] = 1;
+			$caps['edit_published_fep_announcements'] = 1;
+		}
+	}
+	return $caps;
+}
+
+endif;
+
+if ( !function_exists('fep_add_caps_to_roles') ) :
+
+function fep_add_caps_to_roles( $roles = array( 'administrator', 'editor' ) ) {
+
+	if( ! is_array( $roles ) )
+		$roles = array();
+	
+	$caps = fep_get_plugin_caps();
+	
+	foreach( $roles as $role ) {
+		$role_obj = get_role( $role );
+		if( !$role_obj )
+			continue;
+			
+		foreach( $caps as $cap => $val ) {
+			if( $val )
+				$role_obj->add_cap( $cap );
+		}
+	}
+}
+
+endif;
+
 	

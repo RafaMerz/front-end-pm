@@ -29,51 +29,6 @@ function fep_get_user_option( $option, $default = '', $userid = '', $section = '
     return $default;
 }
 
-function fep_get_plugin_caps( $edit_published = false, $for = 'both' ){
-	$message_caps = array(
-		'delete_published_fep_messages' => 'delete_published_fep_messages',
-		'delete_private_fep_messages' => 'delete_private_fep_messages',
-		'delete_others_fep_messages' => 'delete_others_fep_messages',
-		'delete_fep_messages' => 'delete_fep_messages',
-		'publish_fep_messages' => 'publish_fep_messages',
-		'read_private_fep_messages' => 'read_private_fep_messages',
-		'edit_private_fep_messages' => 'edit_private_fep_messages',
-		'edit_others_fep_messages' => 'edit_others_fep_messages',
-		'edit_fep_messages' => 'edit_fep_messages',
-		);
-	
-	$announcement_caps = array(
-		'delete_published_fep_announcements' => 'delete_published_fep_announcements',
-		'delete_private_fep_announcements' => 'delete_private_fep_announcements',
-		'delete_others_fep_announcements' => 'delete_others_fep_announcements',
-		'delete_fep_announcements' => 'delete_fep_announcements',
-		'publish_fep_announcements' => 'publish_fep_announcements',
-		'read_private_fep_announcements' => 'read_private_fep_announcements',
-		'edit_private_fep_announcements' => 'edit_private_fep_announcements',
-		'edit_others_fep_announcements' => 'edit_others_fep_announcements',
-		'edit_fep_announcements' => 'edit_fep_announcements',
-		);
-	
-	if( 'fep_message' == $for ) {
-		$caps = $message_caps;
-		if( $edit_published ) {
-			$caps['edit_published_fep_messages'] = 'edit_published_fep_messages';
-		}
-	} elseif( 'fep_announcement' == $for ){
-		$caps = $announcement_caps;
-		if( $edit_published ) {
-			$caps['edit_published_fep_announcements'] = 'edit_published_fep_announcements';
-		}
-	} else {
-		$caps = array_merge( $message_caps, $announcement_caps );
-		if( $edit_published ) {
-			$caps['edit_published_fep_messages'] = 'edit_published_fep_messages';
-			$caps['edit_published_fep_announcements'] = 'edit_published_fep_announcements';
-		}
-	}
-	return $caps;
-}
-
 if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) return;
 
 add_action('after_setup_theme', 'fep_include_require_files');
@@ -1015,22 +970,6 @@ function fep_auth_redirect_scheme( $scheme ){
 	}
 	
     return 'logged_in';
-}
-
-function fep_add_caps_to_roles() {
-
-	$roles = array( 'administrator', 'editor' );
-	$caps = fep_get_plugin_caps();
-	
-	foreach( $roles as $role ) {
-		$role_obj = get_role( $role );
-		if( !$role_obj )
-			continue;
-			
-		foreach( $caps as $cap ) {
-			$role_obj->add_cap( $cap );
-		}
-	}
 }
 
 add_filter( 'map_meta_cap', 'fep_map_meta_cap', 10, 4 );
