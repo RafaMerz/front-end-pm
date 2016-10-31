@@ -358,7 +358,14 @@ function fep_get_user_announcement_count( $value = 'all', $force = false, $user_
 
 function fep_get_message( $id )
 {
-	return get_post( $id );
+	$post = get_post( $id );
+	
+	if( $post && in_array( get_post_type( $post ), array( 'fep_message', 'fep_announcement') ) ){
+		return $post;
+	} else {
+		return null;
+	}
+	
 }
 
 function fep_get_replies( $id )
