@@ -378,6 +378,10 @@ function fep_get_attachments( $post_id = 0 ) {
 	if( ! $post_id ) {
 		$post_id = get_the_ID();
 	}
+	
+	if( ! $post_id ) {
+		return array();
+	}
     $args =  array(
         'post_type'      => 'attachment',
         'posts_per_page' => -1,
